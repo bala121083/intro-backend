@@ -1,41 +1,30 @@
-exports.getPosts = (req, res) => {
-  const posts = [
-    {
-      id: 1,
-      username: "bala_dev",
-      imageUrl: "https://picsum.photos/id/1011/600/400",
-      caption: "Just launched my new app! 🚀",
-      createdAt: "2025-03-28T10:00:00Z",
-    },
-    {
-      id: 2,
-      username: "akshitha.codes",
-      imageUrl: "https://picsum.photos/id/1025/600/400",
-      caption: "Sunset coding session 🌇",
-      createdAt: "2025-03-27T18:30:00Z",
-    },
-    {
-      id: 3,
-      username: "ria_dev",
-      imageUrl: "https://picsum.photos/id/1035/600/400",
-      caption: "Weekend hackathon prep ☕💻",
-      createdAt: "2025-03-26T09:45:00Z",
-    },
-    {
-      id: 4,
-      username: "dev_lifestyle",
-      imageUrl: "https://picsum.photos/id/1050/600/400",
-      caption: "Designing UI in the zone 🎨",
-      createdAt: "2025-03-25T14:20:00Z",
-    },
-    {
-      id: 5,
-      username: "codewithme",
-      imageUrl: "https://picsum.photos/id/1062/600/400",
-      caption: "Push to Git ✅",
-      createdAt: "2025-03-24T16:00:00Z",
-    },
-  ];
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient();
 
-  res.json(posts);
+exports.getPosts = async (req, res) => {
+  try {
+    const posts = await prisma.posts.findMany({
+      include: {
+        users: {
+          select: { username: true },
+        },
+      },
+      orderBy: {
+        created_at: "desc",
+      },
+    });
+
+    const formattedPosts = posts.map((post) => ({
+      id: post.id.toString(),
+      username: post.users.username,
+      imageUrl: post.media_url,
+      caption: post.caption,
+      createdAt: post.created_at,
+    }));
+
+    res.json(formattedPosts);
+  } catch (error) {
+    console.error("🔥 Error fetching posts:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 };
